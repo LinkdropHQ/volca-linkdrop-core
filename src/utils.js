@@ -2,8 +2,7 @@ import Promise from 'bluebird';
 const Wallet = require('ethereumjs-wallet');
 const Web3Utils = require('web3-utils');
 const util = require("ethereumjs-util");
-const erc20abi = require('human-standard-token-abi');
-import { NFT_ABI } from './metadata'; 
+import { NFT_ABI, ERC20_ABI } from './metadata'; 
 const SIGNATURE_PREFIX = "\x19Ethereum Signed Message:\n32";
 
 
@@ -13,10 +12,22 @@ const SIGNATURE_PREFIX = "\x19Ethereum Signed Message:\n32";
  * @param  {Object}  [web3] - web3 object (from web3.js lib)
  * @return {Object}
  */
-export const getToken = (tokenAddress, web3) => {    
-    const instance = web3.eth.contract(erc20abi).at(tokenAddress);
+export const getToken = (tokenAddress, web3) => {
+    console.log("getting token ", tokenAddress)
+    
+    const instance = web3.eth.contract(ERC20_ABI).at(tokenAddress);
+    console.log("got token")
     Promise.promisifyAll(instance, { suffix: 'Promise' });
+
+
+    // fix for DAI token and web3js bug
+    if (tokenAddress === '0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359') { 
+	instance.decimalsPromise = () => Promise.resolve(web3.toBigNumber(18));
+	instance.symbolPromise = () => Promise.resolve("DAI");	
+    } 
+    
     return instance;
+
 };
 
 
